@@ -13,6 +13,13 @@ sync when working with multiple cameras or different frame rates.
 - Anti burn-in micro-shift
 - Landscape, full-screen, always-on display
 
+## Screenshots
+
+### Dark mode
+![Dark mode](screenshots/screenshot_dark.png)
+
+### Inverted mode
+![Inverted mode](screenshots/screenshot_light.png)
 ## Zener Symbols
 
 The app cycles through a fixed set of highly distinguishable symbols:
@@ -50,3 +57,8 @@ for precise timeline matching in editing software.
 
 This project is an early working version and actively evolving.
 The focus is on visual clarity, timing accuracy, and real-world production usability.
+
+## Releases
+
+- **v0.1** — Initial working release
+- **v0.1.1** — Lifecycle hotfix (timer freeze fix)
