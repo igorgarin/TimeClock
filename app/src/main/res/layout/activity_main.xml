@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:keepScreenOn="true">
+
+    <!-- ================= BACKGROUND DECOR ================= -->
+
+    <!-- CLAPPERBOARD (BACKGROUND) -->
+    <ImageView
+        android:id="@+id/imgClapper"
+        android:layout_width="420dp"
+        android:layout_height="420dp"
+        android:src="@drawable/ic_clapperboard"
+        android:scaleType="fitCenter"
+        android:alpha="0.22"
+        android:rotation="-12"
+        android:elevation="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="64dp"
+        android:layout_marginBottom="48dp" />
+
+    <!-- ================= FOREGROUND ================= -->
+
+    <!-- DATE -->
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="32dp"
+        android:fontFamily="sans-serif-black"
+        android:text="2026-01-11"
+        android:textColor="#FFA800"
+        android:textSize="120sp"
+        android:textStyle="bold"
+        android:includeFontPadding="false"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- INVERT BUTTON -->
+    <TextView
+        android:id="@+id/btnInvert"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="40dp"
+        android:gravity="center"
+        android:text="◐"
+        android:textColor="#FFA800"
+        android:textSize="46sp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- TIME -->
+    <LinearLayout
+        android:id="@+id/timeContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.28">
+
+        <TextView
+            android:id="@+id/tvHour"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="22"
+            android:textColor="#FFEA00"
+            android:textSize="300sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/tvColon1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=":"
+            android:textColor="#FFEA00"
+            android:textSize="170sp"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/tvMinute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="29"
+            android:textColor="#FFEA00"
+            android:textSize="300sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/tvColon2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=":"
+            android:textColor="#FFEA00"
+            android:textSize="170sp"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/tvSecond"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="38"
+            android:textColor="#FFEA00"
+            android:textSize="300sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
+    </LinearLayout>
+
+    <!-- MILLIS -->
+    <TextView
+        android:id="@+id/tvMillis"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="48dp"
+        android:layout_marginBottom="2dp"
+        android:text="23"
+        android:textColor="#05D000"
+        android:textSize="300sp"
+        android:textStyle="normal"
+        android:includeFontPadding="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- ZENER (SAME BOTTOM OFFSET AS MILLIS) -->
+    <TextView
+        android:id="@+id/tvZener"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⬤"
+        android:textSize="300sp"
+        android:textColor="#05D000"
+        android:alpha="1.0"
+        android:includeFontPadding="false"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="160dp"
+        android:layout_marginBottom="2dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
