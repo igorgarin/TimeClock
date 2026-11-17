@@ -145,3 +145,24 @@ The repository source and release notes are not fully aligned on lifecycle/watch
 - [ ] Existing color schemes remain; neutral gray is added.
 - [ ] Lifecycle interruptions do not freeze or duplicate the timing loop.
 - [ ] Long-duration and physical-device tests are completed before release.
+
+
+## 14. V2 implementation progress (2026-11-18)
+
+Implemented on `v2-development`:
+- Original SVG design archive committed at `app/src/main/assets/design/TimeClock_SVG_source.zip`.
+- AndroidSVG runtime dependency added.
+- `SvgAssetLoader` loads the original SVG files from the bundled archive.
+- `TimeClockUiConfig` centralizes the 2000 × 1200 reference-canvas dimensions for the logo, Zener figure, theme button, FPS top offset, and frame counter inset.
+- `FrameClockCalculator` calculates frame indices for 24/25/30/50/60 FPS using a monotonic elapsed-time anchor aligned to system wall time.
+- `ZenerCycle` advances independently every 20 ms and starts from the first symbol on app launch.
+- Main screen now has the SVG logo, SVG Zener figures, FPS selector, theme selector, and frame counter.
+- FPS selection is a separate screen; choosing an FPS highlights it but does not close the screen. Android BACK returns to the main screen.
+- Three color schemes are wired: legacy dark, legacy light/inverted, and neutral gray.
+
+Not yet verified:
+- A full Gradle build has not yet been run in this environment.
+- Rendering and geometry must be checked on the physical Teclast T40 Air.
+- The FPS screen geometry needs a final pass against the supplied selection-screen artwork.
+- Clapperboard animation and lifecycle behavior need physical-device testing after the first APK is built.
+- Exact visual match of date/time to V1 and the 2000 × 1200 mockup must be confirmed on the target device.
