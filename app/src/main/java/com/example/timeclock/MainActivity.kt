@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private var showingFpsScreen = false
     private var loopRunning = false
     private var lastDate = ""
+    private var zenerEpochNanos = 0L
 
     private lateinit var rootLayout: ConstraintLayout
     private lateinit var tvDate: TextView
@@ -85,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                 frameClock.frameIndex(selectedFps, wallNow, elapsedNow)
             )
 
-            imgZener.setImageDrawable(zenerDrawables[ZenerCycle.index(elapsedNow)])
+            imgZener.setImageDrawable(zenerDrawables[ZenerCycle.index(elapsedNow - zenerEpochNanos)])
             handler.postDelayed(this, 8L)
         }
     }
@@ -101,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         val wallNow = System.currentTimeMillis()
         val elapsedNow = SystemClock.elapsedRealtimeNanos()
         frameClock = FrameClockCalculator(wallNow, elapsedNow)
+        zenerEpochNanos = elapsedNow
 
         zenerDrawables = zenerAssets.map { SvgAssetLoader.load(this, it) }
         logoDrawable = SvgAssetLoader.load(this, "IGRN_logo.svg")
