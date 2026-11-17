@@ -181,35 +181,34 @@ class MainActivity : AppCompatActivity() {
     private fun applyReferenceGeometry() {
         rootLayout.post {
             val scale = TimeClockUiConfig.referenceScale(rootLayout.width, rootLayout.height)
-            val density = resources.displayMetrics.density
-            fun dp(referencePx: Float) = (TimeClockUiConfig.px(referencePx, scale) / density).toInt()
+            fun px(referencePx: Float) = TimeClockUiConfig.px(referencePx, scale)
 
             (imgLogo.layoutParams as ConstraintLayout.LayoutParams).apply {
-                width = dp(TimeClockUiConfig.logo.width)
-                height = dp(TimeClockUiConfig.logo.height)
-                marginStart = dp(TimeClockUiConfig.logo.left ?: 0f)
-                bottomMargin = dp(TimeClockUiConfig.logo.bottom ?: 0f)
+                width = px(TimeClockUiConfig.logo.width)
+                height = px(TimeClockUiConfig.logo.height)
+                marginStart = px(TimeClockUiConfig.logo.left ?: 0f)
+                bottomMargin = px(TimeClockUiConfig.logo.bottom ?: 0f)
             }.also { imgLogo.layoutParams = it }
 
             (imgZener.layoutParams as ConstraintLayout.LayoutParams).apply {
-                width = dp(TimeClockUiConfig.zenerFigure.width)
-                height = dp(TimeClockUiConfig.zenerFigure.height)
-                marginStart = dp(TimeClockUiConfig.zenerFigure.left ?: 0f)
-                bottomMargin = dp(TimeClockUiConfig.zenerFigure.bottom ?: 0f)
+                width = px(TimeClockUiConfig.zenerFigure.width)
+                height = px(TimeClockUiConfig.zenerFigure.height)
+                marginStart = px(TimeClockUiConfig.zenerFigure.left ?: 0f)
+                bottomMargin = px(TimeClockUiConfig.zenerFigure.bottom ?: 0f)
             }.also { imgZener.layoutParams = it }
 
             (tvFrameCounter.layoutParams as ConstraintLayout.LayoutParams).apply {
-                bottomMargin = dp(90f)
+                bottomMargin = px(90f)
             }.also { tvFrameCounter.layoutParams = it }
 
             (tvFps.layoutParams as ConstraintLayout.LayoutParams).apply {
-                topMargin = dp(TimeClockUiConfig.FPS_TOP)
+                topMargin = px(TimeClockUiConfig.FPS_TOP)
             }.also { tvFps.layoutParams = it }
 
             (imgThemes.layoutParams as ConstraintLayout.LayoutParams).apply {
-                width = dp(TimeClockUiConfig.colorSchemeButton.width)
-                height = dp(TimeClockUiConfig.colorSchemeButton.height)
-                topMargin = dp(TimeClockUiConfig.FPS_TOP)
+                width = px(TimeClockUiConfig.colorSchemeButton.width)
+                height = px(TimeClockUiConfig.colorSchemeButton.height)
+                topMargin = px(TimeClockUiConfig.FPS_TOP)
             }.also { imgThemes.layoutParams = it }
 
             imgLogo.alpha = TimeClockUiConfig.logo.opacity
