@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private var lastDate = ""
     private var zenerEpochNanos = 0L
     private var clapperAnimator: ObjectAnimator? = null
+    private var activeClapperView: View? = null
 
     private lateinit var frameClock: FrameClockCalculator
     private lateinit var rootLayout: ConstraintLayout
@@ -111,7 +112,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         startTimeLoop()
-        if (::imgClapper.isInitialized) startClapperBreathing(imgClapper)
+        activeClapperView?.let { startClapperBreathing(it) }
     }
 
     override fun onPause() {
@@ -121,7 +122,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startTimeLoop() {
-        if (loopRunning) return
+        if (loopRunning || showingFpsScreen) return
         loopRunning = true
         handler.removeCallbacks(updateRunnable)
         handler.post(updateRunnable)
@@ -159,6 +160,7 @@ class MainActivity : AppCompatActivity() {
         imgLogo.setSvgDrawable(logoDrawable)
         imgThemes.setSvgDrawable(themesDrawable)
         imgClapper.setSvgDrawable(clapperDrawable)
+        activeClapperView = imgClapper
         imgLogo.groupAlpha = TimeClockUiConfig.logo.opacity
         imgClapper.rotation = TimeClockUiConfig.clapperboard.rotation
         tvFps.text = "${selectedFps}fps"
@@ -327,6 +329,7 @@ class MainActivity : AppCompatActivity() {
             topToTop = ConstraintLayout.LayoutParams.PARENT_ID
         })
         setContentView(screen)
+        activeClapperView = clapper
 
         screen.post {
             val scale = TimeClockUiConfig.referenceScale(screen.width, screen.height)
