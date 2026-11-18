@@ -17,3 +17,6 @@ FPS screen corrections:
 - BACK control and Android BACK both return to the main screen; selecting FPS does not close the screen.
 
 Launcher icon correction remains pending: the original supplied PNG must be installed unchanged as a density-independent drawable before the launcher-icon correction can be considered complete.
+
+
+Build validation requested after visual correction commit `4699a34524c63643b6c581824d6f022ce2b46539`.
