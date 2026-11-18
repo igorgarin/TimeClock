@@ -5,26 +5,29 @@ import android.graphics.drawable.PictureDrawable
 import com.caverock.androidsvg.SVG
 import java.util.zip.ZipInputStream
 
-/** Loads original vector artwork without rasterizing it. */
+/** Loads the SVG source artwork as vector PictureDrawables. */
 object SvgAssetLoader {
     private const val ARCHIVE = "design/TimeClock_SVG_source.zip"
-    private const val DESIGN_DIR = "design/"
+    private const val V2_CLAPPERBOARD = "design/clapperboard_V2_03.svg"
 
     fun load(context: Context, assetName: String): PictureDrawable {
-        val directSvg = runCatching {
-            context.assets.open(DESIGN_DIR + assetName).bufferedReader().use { it.readText() }
-        }.getOrNull()
-        val svgText = directSvg ?: ZipInputStream(context.assets.open(ARCHIVE)).use { zip ->
-            var entry = zip.nextEntry
-            while (entry != null) {
-                if (!entry.isDirectory && entry.name == assetName) {
-                    return@use zip.readBytes().toString(Charsets.UTF_8)
+        val svgText = if (assetName == "clapperboard.svg") {
+            context.assets.open(V2_CLAPPERBOARD).bufferedReader().use { it.readText() }
+        } else {
+            ZipInputStream(context.assets.open(ARCHIVE)).use { zip ->
+                var entry = zip.nextEntry
+                var result: String? = null
+                while (entry != null) {
+                    if (!entry.isDirectory && entry.name == assetName) {
+                        result = zip.readBytes().toString(Charsets.UTF_8)
+                        break
+                    }
+                    zip.closeEntry()
+                    entry = zip.nextEntry
                 }
-                zip.closeEntry()
-                entry = zip.nextEntry
-            }
-            null
-        } ?: error("SVG asset not found: $assetName")
+                result
+            } ?: error("SVG asset not found in design archive: $assetName")
+        }
         return PictureDrawable(SVG.getFromString(svgText).renderToPicture())
     }
 }
