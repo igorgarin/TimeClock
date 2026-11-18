@@ -11,7 +11,7 @@ object SvgAssetLoader {
     private const val V2_CLAPPERBOARD = "design/clapperboard_V2_03.svg"
 
     fun load(context: Context, assetName: String): PictureDrawable {
-        val svgText = if (assetName == "clapperboard.svg") {
+        val svgText = if (assetName == "clapperboard_V2_03.svg") {
             context.assets.open(V2_CLAPPERBOARD).bufferedReader().use { it.readText() }
         } else {
             ZipInputStream(context.assets.open(ARCHIVE)).use { zip ->
