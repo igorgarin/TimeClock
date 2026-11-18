@@ -20,3 +20,25 @@ Launcher icon correction remains pending: the original supplied PNG must be inst
 
 
 Build validation requested after visual correction commit `4699a34524c63643b6c581824d6f022ce2b46539`.
+
+
+## 16. Build structure and latest timing geometry (2026-11-18)
+
+The V2 branch is a standard single Android application module:
+- Root Gradle files configure the project and include `:app`.
+- Application source, resources, manifest, assets, and unit tests live only under `app/src/`.
+- The obsolete duplicate root `src/` source tree has been removed.
+- Gradle Wrapper is restored at the repository root.
+
+Latest approved Zener placement on the 2000 × 1200 reference canvas:
+- Figure container: 390 × 390 px.
+- Left inset: 840 px.
+- Bottom inset: 90 px.
+
+Latest Zener timing at 60 Hz:
+- 11 display refreshes per figure.
+- 1 display refresh with no figure (NONE).
+- Five figure/blank pairs = 60 refreshes = one second.
+- The full five-figure sequence repeats at 1 Hz, independent of the selected camera FPS setting.
+
+The original supplied launcher PNG is installed unchanged as a drawable resource. The Android launcher appearance still requires visual confirmation on the target tablet.
