@@ -1,16 +1,10 @@
 package com.example.timeclock
 
-/**
- * Geometry for the 2000 x 1200 design canvas.
- *
- * Values are design pixels, not Android dp. Convert them with referenceScale()
- * against the available content area before applying them to Android Views.
- * V1 date/time geometry remains owned by the legacy layout until explicitly
- * approved for redesign.
- */
+/** Centralized reference geometry for the 2000 x 1200 V2 canvas. */
 object TimeClockUiConfig {
     const val REFERENCE_WIDTH = 2000f
     const val REFERENCE_HEIGHT = 1200f
+    const val FPS_TOP = 110f
 
     data class Element(
         val width: Float,
@@ -19,48 +13,22 @@ object TimeClockUiConfig {
         val right: Float? = null,
         val top: Float? = null,
         val bottom: Float? = null,
-        val opacity: Float = 1f
+        val opacity: Float = 1f,
+        val textSize: Float = 0f,
+        val rotation: Float = 0f
     )
 
-    const val FPS_TOP = 110f
+    val colorSchemeButton = Element(60f, 60f)
+    val logo = Element(360f, 148f, left = 90f, bottom = 90f, opacity = 0.20f)
+    val zenerFigure = Element(390f, 390f, left = 490f, bottom = 90f)
+    val frameCounter = Element(400f, 360f, right = 48f, bottom = 90f, textSize = 300f)
+    val clapperboard = Element(840f, 840f, left = 128f, bottom = 96f, rotation = -12f)
+    val fpsBack = Element(220f, 100f, left = 110f, top = 110f, textSize = 68f)
+    val fpsBand = Element(1866f, 234f, left = 67f, top = 320f, textSize = 160f)
 
-    val colorSchemeButton = Element(
-        width = 60f,
-        height = 60f
-    )
-
-    val logo = Element(
-        width = 360f,
-        height = 148f,
-        left = 90f,
-        bottom = 90f,
-        opacity = 0.20f
-    )
-
-    val zenerFigure = Element(
-        width = 390f,
-        height = 390f,
-        left = 490f,
-        bottom = 90f
-    )
-
-    val clapperboard = Element(
-        width = 512f,
-        height = 512f,
-        opacity = 0.15f
-    )
-
-    /**
-     * Uniform scale preserves the Illustrator canvas proportions.
-     * The caller supplies the actual available content width and height
-     * after applying the chosen system-bar/insets policy.
-     */
     fun referenceScale(contentWidthPx: Int, contentHeightPx: Int): Float {
         require(contentWidthPx > 0 && contentHeightPx > 0)
-        return minOf(
-            contentWidthPx / REFERENCE_WIDTH,
-            contentHeightPx / REFERENCE_HEIGHT
-        )
+        return minOf(contentWidthPx / REFERENCE_WIDTH, contentHeightPx / REFERENCE_HEIGHT)
     }
 
     fun px(value: Float, scale: Float): Int = (value * scale).toInt()
