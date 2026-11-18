@@ -77,7 +77,8 @@ class MainActivity : AppCompatActivity() {
             tvMinute.text = minuteFormat.format(now)
             tvSecond.text = secondFormat.format(now)
             tvFrameCounter.text = "%02d".format(frameClock.frameIndex(selectedFps, wallNow, elapsedNow))
-            imgZener.setSvgDrawable(zenerDrawables[ZenerCycle.index(elapsedNow - zenerEpochNanos)])
+            val zenerIndex = ZenerCycle.index(elapsedNow - zenerEpochNanos)
+            imgZener.setSvgDrawable(zenerIndex?.let { zenerDrawables[it] })
             handler.postDelayed(this, 8L)
         }
     }
