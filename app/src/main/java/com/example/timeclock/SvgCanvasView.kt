@@ -31,7 +31,7 @@ class SvgCanvasView @JvmOverloads constructor(
             invalidate()
         }
 
-    fun setSvgDrawable(drawable: Drawable) {
+    fun setSvgDrawable(drawable: Drawable?) {
         vectorDrawable = drawable
         invalidate()
     }
