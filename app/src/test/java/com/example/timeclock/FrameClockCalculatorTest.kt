@@ -19,14 +19,14 @@ class FrameClockCalculatorTest {
 
     @Test
     fun zenerCycleUsesElevenRefreshesThenOneBlankAtSixtyHertz() {
-        val refreshNanos = 1_000_000_000L / 60L
+        fun atRefresh(index: Long) = (index * 1_000_000_000L + 59L) / 60L
         for (figure in 0..4) {
             val first = figure * 12L
             repeat(11) { offset ->
-                assertEquals(figure, ZenerCycle.index((first + offset) * refreshNanos))
+                assertEquals(figure, ZenerCycle.index(atRefresh(first + offset)))
             }
-            assertNull(ZenerCycle.index((first + 11L) * refreshNanos))
+            assertNull(ZenerCycle.index(atRefresh(first + 11L)))
         }
-        assertEquals(0, ZenerCycle.index(60L * refreshNanos))
+        assertEquals(0, ZenerCycle.index(atRefresh(60L)))
     }
 }
