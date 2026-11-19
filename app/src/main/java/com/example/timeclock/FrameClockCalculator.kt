@@ -42,28 +42,43 @@ class FrameClockCalculator(
     }
 
     companion object {
-        val SUPPORTED_FPS = setOf(24, 25, 30, 50, 60)
+        val SUPPORTED_FPS = setOf(24, 25, 30, 50, 60, 100)
         private const val NANOS_PER_MILLI = 1_000_000L
         private const val WALL_CLOCK_RESYNC_MS = 5L
     }
 }
 
 /**
- * 60 Hz cadence: 11 refreshes per figure, followed by one blank refresh.
- * Five groups of 12 refreshes make one 60-refresh / one-second cycle.
+ * A 60-slot cycle driven by display VSync. Each figure occupies 11 refreshes,
+ * followed by one blank refresh. The sequence is independent of selected FPS.
  */
 object ZenerCycle {
-    private const val DISPLAY_HZ = 60L
-    private const val NANOS_PER_SECOND = 1_000_000_000L
+    private const val REFRESHES_PER_SECOND = 60L
     private const val REFRESHES_PER_FIGURE = 11L
-    private const val REFRESHES_PER_SLOT = 12L
-    private const val FIGURE_COUNT = 5L
-    private const val CYCLE_REFRESHES = REFRESHES_PER_SLOT * FIGURE_COUNT
+    private const val SLOTS_PER_FIGURE = 12L
+    private const val CYCLE_SLOTS = REFRESHES_PER_FIGURE * 5L + 5L
+    private const val NANOS_PER_SECOND = 1_000_000_000L
 
-    fun index(elapsedRealtimeNanos: Long): Int? {
-        val refresh = Math.floorDiv(elapsedRealtimeNanos * DISPLAY_HZ, NANOS_PER_SECOND)
-        val position = Math.floorMod(refresh, CYCLE_REFRESHES)
-        if (position % REFRESHES_PER_SLOT == REFRESHES_PER_FIGURE) return null
-        return (position / REFRESHES_PER_SLOT).toInt()
+    fun index(elapsedNanos: Long): Int? {
+        val slot = Math.floorMod(elapsedNanos, NANOS_PER_SECOND) * REFRESHES_PER_SECOND /
+            NANOS_PER_SECOND
+        val slotInCycle = slot % CYCLE_SLOTS
+        val figureIndex = (slotInCycle / SLOTS_PER_FIGURE).toInt()
+        val refreshInFigure = slotInCycle % SLOTS_PER_FIGURE
+        return figureIndex.takeIf { it < 5 && refreshInFigure < REFRESHES_PER_FIGURE }
+    }
+}
+
+/** Twelve ring segments change continuously, five VSync slots per segment at 60 Hz. */
+object ZenerRingCycle {
+    private const val REFRESHES_PER_SECOND = 60L
+    private const val SEGMENT_COUNT = 12L
+    private const val REFRESHES_PER_SEGMENT = REFRESHES_PER_SECOND / SEGMENT_COUNT
+    private const val NANOS_PER_SECOND = 1_000_000_000L
+
+    fun index(elapsedNanos: Long): Int {
+        val slot = Math.floorMod(elapsedNanos, NANOS_PER_SECOND) * REFRESHES_PER_SECOND /
+            NANOS_PER_SECOND
+        return (slot / REFRESHES_PER_SEGMENT).toInt()
     }
 }
