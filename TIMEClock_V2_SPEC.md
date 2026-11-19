@@ -12,7 +12,7 @@ Main-screen corrections:
 - Keep the logo's original vector fill and apply its 20% group opacity.
 
 FPS screen corrections:
-- Neutral-gray background, BACK control at the upper left, horizontal 24/25/30/50/60 row in a rounded dark-gray band, selected number white and others black.
+- Neutral-gray background, BACK control at the upper left, horizontal 24/25/30/50/60/100 row in a rounded dark-gray band, selected number white and others black.
 - Logo and clapperboard reuse the same SVG assets, reference geometry, group opacity, and breathing animation as the main screen.
 - BACK control and Android BACK both return to the main screen; selecting FPS does not close the screen.
 
