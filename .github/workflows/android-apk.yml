@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - v2-development
+      - V2.20
   workflow_dispatch:
 
 permissions:
