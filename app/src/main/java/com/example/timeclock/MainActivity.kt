@@ -3,7 +3,10 @@ package com.example.timeclock
 import android.animation.ValueAnimator
 import android.graphics.Color
 import android.graphics.Typeface
+import android.view.MotionEvent
 import android.graphics.drawable.GradientDrawable
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.TypedValue
@@ -35,10 +38,17 @@ class MainActivity : AppCompatActivity() {
         "Zener_5_Star.svg"
     )
     private val zenerRingAssets = (1..12).map { "Zener_Ring_$it.svg" }
+    private val signalAssetNames = (1..6).map { "Signal$it.wav" }
 
     private var selectedFps = 30
+    private var selectedSignalIndex = 0
+    private var selectedVolumeLevel = 10
     private var colorScheme = ColorScheme.NEUTRAL_GRAY
-    private var showingFpsScreen = false
+    private var showingSubScreen = false
+    private var clackFlashGeneration = 0
+    private var soundPool: SoundPool? = null
+    private val soundSampleIds = mutableListOf<Int>()
+    private val loadedSoundIds = mutableSetOf<Int>()
     private var loopRunning = false
     private var lastDate = ""
     private var zenerEpochFrameNanos: Long? = null
@@ -58,16 +68,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var zenerContainer: FrameLayout
     private lateinit var imgZener: SvgCanvasView
     private lateinit var imgZenerRing: SvgCanvasView
-    private lateinit var imgLogo: SvgCanvasView
+    private lateinit var imgFunctions: SvgCanvasView
     private lateinit var imgThemes: SvgCanvasView
     private lateinit var imgClapper: SvgCanvasView
+    private lateinit var imgClack: SvgCanvasView
 
     private lateinit var frameClock: FrameClockCalculator
     private lateinit var zenerDrawables: List<android.graphics.drawable.Drawable>
     private lateinit var zenerRingDrawables: List<android.graphics.drawable.Drawable>
-    private lateinit var logoDrawable: android.graphics.drawable.Drawable
     private lateinit var clapperDrawable: android.graphics.drawable.Drawable
+    private lateinit var subScreenClapperDrawable: android.graphics.drawable.Drawable
     private lateinit var themesDrawable: android.graphics.drawable.Drawable
+    private lateinit var functionsDrawable: android.graphics.drawable.Drawable
+    private lateinit var clackDrawable: android.graphics.drawable.Drawable
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val hourFormat = SimpleDateFormat("HH", Locale.getDefault())
@@ -75,7 +88,7 @@ class MainActivity : AppCompatActivity() {
     private val secondFormat = SimpleDateFormat("ss", Locale.getDefault())
 
     private val frameCallback: Choreographer.FrameCallback = Choreographer.FrameCallback { frameTimeNanos ->
-        if (loopRunning && !showingFpsScreen) {
+        if (loopRunning && !showingSubScreen) {
             updateScreen(frameTimeNanos)
             Choreographer.getInstance().postFrameCallback(frameCallback)
         }
@@ -123,20 +136,27 @@ class MainActivity : AppCompatActivity() {
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 
+        val preferences = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
+        selectedSignalIndex = preferences.getInt(PREF_SIGNAL_INDEX, 0).coerceIn(0, signalAssetNames.lastIndex)
+        selectedVolumeLevel = preferences.getInt(PREF_VOLUME_LEVEL, 10).coerceIn(1, 10)
+
         frameClock = FrameClockCalculator(
             System.currentTimeMillis(),
             SystemClock.elapsedRealtimeNanos()
         )
         zenerDrawables = zenerAssets.map { SvgAssetLoader.load(this, it) }
         zenerRingDrawables = zenerRingAssets.map { SvgAssetLoader.load(this, it) }
-        logoDrawable = SvgAssetLoader.load(this, "IGRN_logo.svg")
-        clapperDrawable = SvgAssetLoader.load(this, "clapperboard_V2_03.svg")
+        clapperDrawable = SvgAssetLoader.load(this, "clapperboard_logo_4.svg")
+        subScreenClapperDrawable = SvgAssetLoader.load(this, "clapperboard_logo.svg")
         themesDrawable = SvgAssetLoader.load(this, "icon_themes.svg")
+        functionsDrawable = SvgAssetLoader.load(this, "icon_functions.svg")
+        clackDrawable = SvgAssetLoader.load(this, "Clack_Button_02.svg")
+        initializeSoundPool()
 
         showMainScreen()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (showingFpsScreen) {
+                if (showingSubScreen) {
                     showMainScreen()
                 } else {
                     isEnabled = false
@@ -151,6 +171,12 @@ class MainActivity : AppCompatActivity() {
         startTimeLoop()
     }
 
+    override fun onDestroy() {
+        soundPool?.release()
+        soundPool = null
+        super.onDestroy()
+    }
+
     override fun onPause() {
         stopTimeLoop()
         stopClapperBreathing()
@@ -158,7 +184,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startTimeLoop() {
-        if (loopRunning || showingFpsScreen) return
+        if (loopRunning || showingSubScreen) return
         loopRunning = true
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         Choreographer.getInstance().postFrameCallback(frameCallback)
@@ -175,7 +201,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showMainScreen() {
-        showingFpsScreen = false
+        showingSubScreen = false
         stopClapperBreathing()
         setContentView(R.layout.activity_main)
 
@@ -193,22 +219,39 @@ class MainActivity : AppCompatActivity() {
         zenerContainer = findViewById(R.id.zenerContainer)
         imgZener = findViewById(R.id.imgZener)
         imgZenerRing = findViewById(R.id.imgZenerRing)
-        imgLogo = findViewById(R.id.imgLogo)
         imgThemes = findViewById(R.id.imgThemes)
+        imgFunctions = findViewById(R.id.imgFunctions)
         imgClapper = findViewById(R.id.imgClapper)
+        imgClack = findViewById(R.id.imgClack)
         lastZenerIndex = Int.MIN_VALUE
         lastRingIndex = Int.MIN_VALUE
 
         findViewById<View>(R.id.btnInvert).visibility = View.GONE
-        imgLogo.setSvgDrawable(logoDrawable)
         imgThemes.setSvgDrawable(themesDrawable)
+        imgFunctions.setSvgDrawable(functionsDrawable)
+        imgClack.setSvgDrawable(clackDrawable)
         imgClapper.setSvgDrawable(clapperDrawable)
         imgClapper.groupAlpha = TimeClockUiConfig.clapperboard.opacity
         imgClapper.rotation = -12f
         tvFps.text = "${selectedFps}fps"
 
         tvFps.setOnClickListener { showFpsScreen() }
+        imgFunctions.setOnClickListener { showFunctionsScreen() }
         imgThemes.setOnClickListener { cycleColorScheme() }
+        imgClack.setOnClickListener { triggerClack() }
+        imgClack.contentDescription = "Play clack sound"
+        imgClack.isClickable = true
+        imgClack.isFocusable = true
+        imgClack.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    view.performClick()
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_MOVE -> true
+                else -> true
+            }
+        }
 
         applyReferenceGeometry()
         applyColorScheme()
@@ -221,12 +264,12 @@ class MainActivity : AppCompatActivity() {
             val scale = TimeClockUiConfig.referenceScale(rootLayout.width, rootLayout.height)
             fun px(value: Float) = TimeClockUiConfig.px(value, scale)
 
-            (imgLogo.layoutParams as ConstraintLayout.LayoutParams).apply {
-                width = px(TimeClockUiConfig.logo.width)
-                height = px(TimeClockUiConfig.logo.height)
-                marginStart = px(TimeClockUiConfig.logo.left ?: 0f)
-                bottomMargin = px(TimeClockUiConfig.logo.bottom ?: 0f)
-            }.also { imgLogo.layoutParams = it }
+            (imgClack.layoutParams as ConstraintLayout.LayoutParams).apply {
+                width = px(TimeClockUiConfig.clackButton.width)
+                height = px(TimeClockUiConfig.clackButton.height)
+                marginStart = px(TimeClockUiConfig.clackButton.left ?: 0f)
+                bottomMargin = px(TimeClockUiConfig.clackButton.bottom ?: 0f)
+            }.also { imgClack.layoutParams = it }
 
             (zenerContainer.layoutParams as ConstraintLayout.LayoutParams).apply {
                 width = px(TimeClockUiConfig.zenerFigure.width)
@@ -237,16 +280,21 @@ class MainActivity : AppCompatActivity() {
 
             (tvFrameCounter.layoutParams as ConstraintLayout.LayoutParams).apply {
                 marginEnd = px(TimeClockUiConfig.frameCounter.right ?: 48f)
-                bottomMargin = px(-20f)
+                bottomMargin = px(TimeClockUiConfig.frameCounter.bottom ?: 0f)
             }.also { tvFrameCounter.layoutParams = it }
-            tvFrameCounter.setTextSize(
-                TypedValue.COMPLEX_UNIT_PX,
-                px(TimeClockUiConfig.frameCounter.textSize).toFloat()
-            )
+            tvFrameCounter.setTextSize(TypedValue.COMPLEX_UNIT_PX, tvHour.textSize)
 
             (tvFps.layoutParams as ConstraintLayout.LayoutParams).apply {
                 topMargin = px(TimeClockUiConfig.FPS_LABEL_TOP)
+                marginEnd = px(TimeClockUiConfig.TOP_BUTTON_GAP)
             }.also { tvFps.layoutParams = it }
+
+            (imgFunctions.layoutParams as ConstraintLayout.LayoutParams).apply {
+                width = px(TimeClockUiConfig.functionsButton.width)
+                height = px(TimeClockUiConfig.functionsButton.height)
+                topMargin = px(TimeClockUiConfig.functionsButton.top ?: TimeClockUiConfig.FPS_TOP)
+                marginEnd = px(TimeClockUiConfig.TOP_BUTTON_GAP)
+            }.also { imgFunctions.layoutParams = it }
 
             (imgThemes.layoutParams as ConstraintLayout.LayoutParams).apply {
                 width = px(TimeClockUiConfig.colorSchemeButton.width)
@@ -297,17 +345,18 @@ class MainActivity : AppCompatActivity() {
         tvDate.setTextColor(dateColor)
         tvFps.setTextColor(dateColor)
         imgThemes.tintColor = dateColor
+        imgFunctions.tintColor = dateColor
         listOf(tvHour, tvMinute, tvSecond, tvColon1, tvColon2).forEach {
             it.setTextColor(timeColor)
         }
         tvFrameCounter.setTextColor(markerColor)
         imgZener.tintColor = markerColor
         imgZenerRing.tintColor = markerColor
-        imgLogo.tintColor = null
+        imgClack.tintColor = markerColor
     }
 
     private fun showFpsScreen() {
-        showingFpsScreen = true
+        showingSubScreen = true
         stopTimeLoop()
         stopClapperBreathing()
 
@@ -316,12 +365,8 @@ class MainActivity : AppCompatActivity() {
             keepScreenOn = true
         }
         val clapper = SvgCanvasView(this).apply {
-            setSvgDrawable(clapperDrawable)
+            setSvgDrawable(subScreenClapperDrawable)
             rotation = -12f
-        }
-        val logo = SvgCanvasView(this).apply {
-            setSvgDrawable(logoDrawable)
-            groupAlpha = TimeClockUiConfig.logo.opacity
         }
         val backButton = TextView(this).apply {
             text = "BACK"
@@ -365,10 +410,6 @@ class MainActivity : AppCompatActivity() {
             marginStart = dp(64)
             bottomMargin = dp(48)
         })
-        screen.addView(logo, ConstraintLayout.LayoutParams(1, 1).apply {
-            startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-            bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
-        })
         screen.addView(backButton, ConstraintLayout.LayoutParams(1, 1).apply {
             startToStart = ConstraintLayout.LayoutParams.PARENT_ID
             topToTop = ConstraintLayout.LayoutParams.PARENT_ID
@@ -382,13 +423,6 @@ class MainActivity : AppCompatActivity() {
         screen.post {
             val scale = TimeClockUiConfig.referenceScale(screen.width, screen.height)
             fun px(value: Float) = TimeClockUiConfig.px(value, scale)
-
-            (logo.layoutParams as ConstraintLayout.LayoutParams).apply {
-                width = px(TimeClockUiConfig.logo.width)
-                height = px(TimeClockUiConfig.logo.height)
-                marginStart = px(TimeClockUiConfig.logo.left ?: 0f)
-                bottomMargin = px(TimeClockUiConfig.logo.bottom ?: 0f)
-            }.also { logo.layoutParams = it }
 
             (backButton.layoutParams as ConstraintLayout.LayoutParams).apply {
                 width = px(TimeClockUiConfig.fpsBack.width)
@@ -421,6 +455,264 @@ class MainActivity : AppCompatActivity() {
         startClapperBreathing(clapper)
     }
 
+    private fun initializeSoundPool() {
+        val attributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        val pool = SoundPool.Builder()
+            .setMaxStreams(1)
+            .setAudioAttributes(attributes)
+            .build()
+        soundPool = pool
+        pool.setOnLoadCompleteListener { _, sampleId, status ->
+            if (status == 0) {
+                synchronized(loadedSoundIds) {
+                    loadedSoundIds.add(sampleId)
+                }
+            }
+        }
+        signalAssetNames.forEach { name ->
+            val sampleId = assets.openFd("audio/$name").use { descriptor ->
+                pool.load(descriptor, 1)
+            }
+            soundSampleIds.add(sampleId)
+        }
+    }
+
+    private fun playSelectedSound() {
+        if (selectedVolumeLevel == 1) return
+        val sampleId = soundSampleIds.getOrNull(selectedSignalIndex) ?: return
+        val loaded = synchronized(loadedSoundIds) { sampleId in loadedSoundIds }
+        if (!loaded || sampleId == 0) return
+        val volume = ((selectedVolumeLevel - 1) / 9f).coerceIn(0f, 1f)
+        soundPool?.play(sampleId, volume, volume, 1, 0, 1f)
+    }
+
+    private fun saveFunctionSettings() {
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
+            .putInt(PREF_SIGNAL_INDEX, selectedSignalIndex)
+            .putInt(PREF_VOLUME_LEVEL, selectedVolumeLevel)
+            .apply()
+    }
+
+    private fun triggerClack() {
+        val generation = ++clackFlashGeneration
+        rootLayout.setBackgroundColor(Color.RED)
+        rootLayout.postDelayed({
+            if (generation == clackFlashGeneration) applyColorScheme()
+        }, CLACK_FLASH_DURATION_MS)
+        playSelectedSound()
+    }
+
+    private fun showFunctionsScreen() {
+        showingSubScreen = true
+        stopTimeLoop()
+        stopClapperBreathing()
+
+        val screen = ConstraintLayout(this).apply {
+            setBackgroundColor(Color.rgb(118, 118, 118))
+            keepScreenOn = true
+        }
+        val clapper = SvgCanvasView(this).apply {
+            setSvgDrawable(subScreenClapperDrawable)
+            rotation = -12f
+        }
+        val backButton = TextView(this).apply {
+            text = "BACK"
+            setTextColor(Color.rgb(51, 51, 51))
+            typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            gravity = Gravity.CENTER
+            includeFontPadding = false
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { showMainScreen() }
+        }
+        val volumeBand = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            isClickable = true
+            contentDescription = "Volume slider"
+            background = GradientDrawable().apply {
+                setColor(Color.rgb(74, 74, 74))
+                cornerRadius = 32f
+            }
+        }
+        val volumeBars = mutableListOf<View>()
+        repeat(10) {
+            val cell = FrameLayout(this)
+            val bar = View(this).apply {
+                background = GradientDrawable().apply { cornerRadius = 12f }
+            }
+            cell.addView(bar, FrameLayout.LayoutParams(dp(32), dp(32), Gravity.CENTER))
+            volumeBars += bar
+            volumeBand.addView(cell, LinearLayout.LayoutParams(0, -1, 1f))
+        }
+        var volumeGestureActive = false
+        var volumePreviewPending = false
+        val volumeIdlePreview = Runnable {
+            if (volumeGestureActive && volumePreviewPending) {
+                volumePreviewPending = false
+                playSelectedSound()
+            }
+        }
+        fun updateVolumeFromTouch(x: Float) {
+            if (volumeBand.width <= 0) return
+            val level = ((x / volumeBand.width) * 10f).toInt().coerceIn(0, 9) + 1
+            if (level == selectedVolumeLevel) return
+            selectedVolumeLevel = level
+            saveFunctionSettings()
+            updateVolumeSelection(volumeBars)
+            volumePreviewPending = true
+            volumeBand.removeCallbacks(volumeIdlePreview)
+            volumeBand.postDelayed(volumeIdlePreview, VOLUME_IDLE_PREVIEW_DELAY_MS)
+        }
+        volumeBand.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    volumeGestureActive = true
+                    volumePreviewPending = false
+                    updateVolumeFromTouch(event.x)
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    updateVolumeFromTouch(event.x)
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    updateVolumeFromTouch(event.x)
+                    volumeGestureActive = false
+                    volumeBand.removeCallbacks(volumeIdlePreview)
+                    if (volumePreviewPending) {
+                        volumePreviewPending = false
+                        playSelectedSound()
+                    }
+                    view.performClick()
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    volumeGestureActive = false
+                    volumePreviewPending = false
+                    volumeBand.removeCallbacks(volumeIdlePreview)
+                    true
+                }
+                else -> true
+            }
+        }
+
+        val signalNumbers = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply {
+                setColor(Color.rgb(74, 74, 74))
+                cornerRadius = 32f
+            }
+        }
+        val signalNumberViews = mutableListOf<TextView>()
+        signalAssetNames.indices.forEach { index ->
+            val number = TextView(this).apply {
+                text = (index + 1).toString()
+                gravity = Gravity.CENTER
+                includeFontPadding = false
+                typeface = Typeface.create("sans-serif", Typeface.BOLD)
+                isClickable = true
+                isFocusable = true
+                contentDescription = "Signal ${index + 1}"
+                setOnClickListener {
+                    if (selectedSignalIndex != index) {
+                        selectedSignalIndex = index
+                        saveFunctionSettings()
+                        updateSignalSelection(signalNumberViews)
+                        playSelectedSound()
+                    }
+                }
+            }
+            signalNumberViews += number
+            signalNumbers.addView(number, LinearLayout.LayoutParams(0, -1, 1f))
+        }
+        updateVolumeSelection(volumeBars)
+        updateSignalSelection(signalNumberViews)
+
+        screen.addView(clapper, ConstraintLayout.LayoutParams(dp(420), dp(420)).apply {
+            startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
+            marginStart = dp(64)
+            bottomMargin = dp(48)
+        })
+        screen.addView(backButton, ConstraintLayout.LayoutParams(1, 1).apply {
+            startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        })
+        screen.addView(volumeBand, ConstraintLayout.LayoutParams(1, 1).apply {
+            startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        })
+        screen.addView(signalNumbers, ConstraintLayout.LayoutParams(1, 1).apply {
+            startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        })
+
+        setContentView(screen)
+        screen.post {
+            val scale = TimeClockUiConfig.referenceScale(screen.width, screen.height)
+            fun px(value: Float) = TimeClockUiConfig.px(value, scale)
+
+            (backButton.layoutParams as ConstraintLayout.LayoutParams).apply {
+                width = px(TimeClockUiConfig.fpsBack.width)
+                height = px(TimeClockUiConfig.fpsBack.height)
+                marginStart = px(TimeClockUiConfig.fpsBack.left ?: 0f)
+                topMargin = px(TimeClockUiConfig.fpsBack.top ?: 0f)
+            }.also { backButton.layoutParams = it }
+            backButton.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(TimeClockUiConfig.fpsBack.textSize).toFloat())
+
+            fun place(view: View, width: Float, height: Float, left: Float, top: Float) {
+                (view.layoutParams as ConstraintLayout.LayoutParams).apply {
+                    this.width = px(width)
+                    this.height = px(height)
+                    marginStart = px(left)
+                    topMargin = px(top)
+                }.also { view.layoutParams = it }
+            }
+            place(volumeBand, TimeClockUiConfig.fpsBand.width, 211f,
+                TimeClockUiConfig.fpsBand.left ?: 67f, 300f)
+            volumeBand.background = GradientDrawable().apply {
+                setColor(Color.rgb(74, 74, 74))
+                cornerRadius = px(32f).toFloat()
+            }
+            val maxBarHeight = px(169f)
+            val minBarHeight = px(27f)
+            volumeBars.forEachIndexed { index, bar ->
+                val barHeight = minBarHeight + (maxBarHeight - minBarHeight) * index / 9
+                bar.layoutParams = FrameLayout.LayoutParams(px(48f), barHeight, Gravity.CENTER)
+            }
+
+            place(signalNumbers, TimeClockUiConfig.fpsBand.width, TimeClockUiConfig.fpsBand.height, 67f, 581f)
+            signalNumbers.setPadding(px(35f), 0, px(35f), 0)
+            signalNumbers.background = null
+            signalNumberViews.forEach { number ->
+                number.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(160f).toFloat())
+            }
+            updateVolumeSelection(volumeBars)
+            updateSignalSelection(signalNumberViews)
+        }
+        startClapperBreathing(clapper)
+    }
+
+    private fun updateVolumeSelection(bars: List<View>) {
+        val litBars = if (selectedVolumeLevel == 10) 10 else
+            ((selectedVolumeLevel - 1) * bars.size / 9f).roundToInt()
+        bars.forEachIndexed { index, bar ->
+            val color = if (index < litBars) Color.WHITE else Color.BLACK
+            (bar.background as? GradientDrawable)?.setColor(color)
+        }
+    }
+
+    private fun updateSignalSelection(numbers: List<TextView>) {
+        numbers.forEachIndexed { index, number ->
+            number.setTextColor(if (index == selectedSignalIndex) Color.WHITE else Color.BLACK)
+        }
+    }
+
     private fun updateFpsSelection(list: LinearLayout) {
         for (index in 0 until list.childCount) {
             val option = list.getChildAt(index) as TextView
@@ -446,5 +738,13 @@ class MainActivity : AppCompatActivity() {
             }
             start()
         }
+    }
+
+    private companion object {
+        const val PREFERENCES_NAME = "timeclock_functions"
+        const val PREF_SIGNAL_INDEX = "signal_index"
+        const val PREF_VOLUME_LEVEL = "volume_level"
+        const val CLACK_FLASH_DURATION_MS = 100L
+        const val VOLUME_IDLE_PREVIEW_DELAY_MS = 300L
     }
 }

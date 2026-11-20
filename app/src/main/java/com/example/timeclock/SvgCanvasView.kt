@@ -36,6 +36,11 @@ class SvgCanvasView @JvmOverloads constructor(
         invalidate()
     }
 
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val drawable = vectorDrawable ?: return

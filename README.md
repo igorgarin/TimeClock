@@ -6,25 +6,27 @@ TimeClock is a full-screen Android clock for camera work and post-production. It
 
 - Large local date and HH:MM:SS clock.
 - Selectable frame rates: 24, 25, 30, 50, 60, and 100 fps.
-- Frame counter that runs from 00 through FPS - 1 and resets each second.
+- Frame counter synchronized to real time; its rendered text size matches the clock, and it counts from 00 through FPS - 1 before resetting each second.
 - Five Zener symbols, each shown for 11 display refreshes followed by one blank refresh.
-- A 6-segment ring that advances continuously alongside the Zener symbols.
+- A six-position functional ring; its twelve SVG states show each functional position twice, while the smaller ring marks are decorative.
 - VSync-based animation through Android Choreographer; Zener timing stays independent of the selected camera FPS.
-- Three color schemes: neutral gray, dark, and light. Each applies consistent colors across the date/FPS controls, clock, and lower marker band.
-- Vector SVG artwork for the logo, clapperboard, Zener symbols, ring segments, and theme control.
+- Three color schemes: neutral gray, dark, and light, with consistent colors across each screen zone.
+- Main-screen Clack button: plays the selected sound and flashes the background red for 100 ms.
+- Functions screen: ten-step volume slider (1 mutes; 10 is maximum app playback level) and six selectable signal sounds. Changing a signal or finishing a volume adjustment previews the sound once.
+- Vector SVG clapperboards, Zener symbols, ring states, and controls.
 - Full-screen landscape display that stays awake while the app is open.
 
 ## Screenshots
 
-The screenshots below show the three main color schemes and the FPS selector.
+Place the five tablet screenshots in `screenshots/` using these filenames:
 
-| Neutral gray | Dark |
-|---|---|
-| ![Neutral gray main screen](Screenshot_1_Gray.png) | ![Dark main screen](Screenshot_2_Dark.png) |
+| Neutral gray | Dark | Light |
+|---|---|---|
+| ![Neutral gray main screen](screenshots/v2.20_main_gray.png) | ![Dark main screen](screenshots/v2.20_main_dark.png) | ![Light main screen](screenshots/v2.20_main_light.png) |
 
-| Light | FPS selector |
+| FPS selector | Functions / signals |
 |---|---|
-| ![Light main screen](Screenshot_3_Light.png) | ![FPS selector](Screenshot_4_FPS.png) |
+| ![FPS selector](screenshots/v2.20_fps.png) | ![Functions and signal selector](screenshots/v2.20_signals.png) |
 
 ## Build and test
 
