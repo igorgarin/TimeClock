@@ -6,14 +6,13 @@ TimeClock is a full-screen Android clock for camera work and post-production. It
 
 - Large local date and HH:MM:SS clock.
 - Selectable frame rates: 24, 25, 30, 50, 60, and 100 fps.
-- Frame counter synchronized to real time; its rendered text size matches the clock, and it counts from 00 through FPS - 1 before resetting each second.
+- Frame counter synchronized to real time; it counts from 00 through FPS - 1 before resetting each second.
 - Five Zener symbols, each shown for 11 display refreshes followed by one blank refresh.
-- A six-position functional ring; its twelve SVG states show each functional position twice, while the smaller ring marks are decorative.
-- VSync-based animation through Android Choreographer; Zener timing stays independent of the selected camera FPS.
-- Three color schemes: neutral gray, dark, and light, with consistent colors across each screen zone.
+- A six-position functional ring;
+- Zener timing stays independent of the selected camera FPS.
+- Three color schemes: neutral gray, dark, and light.
 - Main-screen Clack button: plays the selected sound and flashes the background red for 100 ms.
-- Functions screen: ten-step volume slider (1 mutes; 10 is maximum app playback level) and six selectable signal sounds. Changing a signal or finishing a volume adjustment previews the sound once.
-- Vector SVG clapperboards, Zener symbols, ring states, and controls.
+- Functions screen: ten-step volume slider (1 mutes; 10 is maximum app playback level) and six selectable signal sounds. 
 - Full-screen landscape display that stays awake while the app is open.
 
 ## Screenshots
