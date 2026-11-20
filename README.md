@@ -20,9 +20,17 @@ TimeClock is a full-screen Android clock for camera work and post-production. It
 
 Place the five tablet screenshots in `screenshots/` using these filenames:
 
-| Neutral gray | Dark | Light |
-|---|---|---|
-| ![Neutral gray main screen](screenshots/v2.20_main_gray.png) | ![Dark main screen](screenshots/v2.20_main_dark.png) | ![Light main screen](screenshots/v2.20_main_light.png) |
+### Neutral gray
+
+![Neutral gray main screen](screenshots/v2.20_main_gray.png)
+
+### Dark
+
+![Dark main screen](screenshots/v2.20_main_dark.png)
+
+### Light
+
+![Light main screen](screenshots/v2.20_main_light.png)
 
 | FPS selector | Functions / signals |
 |---|---|
