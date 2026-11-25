@@ -161,11 +161,11 @@
         android:includeFontPadding="false"
         android:clickable="true"
         android:focusable="true"
-        app:layout_constraintEnd_toStartOf="@id/imgFunctions"
+        app:layout_constraintEnd_toStartOf="@id/imgSound"
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.example.timeclock.SvgCanvasView
-        android:id="@+id/imgFunctions"
+        android:id="@+id/imgSound"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginTop="32dp"

@@ -12,7 +12,7 @@ TimeClock is a full-screen Android clock for camera work and post-production. It
 - Zener timing stays independent of the selected camera FPS.
 - Three color schemes: neutral gray, dark, and light.
 - Main-screen Clack button: plays the selected sound and flashes the background red for 100 ms.
-- Functions screen: ten-step volume slider (1 mutes; 10 is maximum app playback level) and six selectable signal sounds. 
+- Sound screen: ten-step volume slider (1 mutes; 10 is maximum app playback level) and six selectable signal sounds. 
 - Full-screen landscape display that stays awake while the app is open.
 
 ## Screenshots
@@ -31,9 +31,9 @@ Place the five tablet screenshots in `screenshots/` using these filenames:
 
 ![Light main screen](screenshots/v2.20_main_light.png)
 
-| FPS selector | Functions / signals |
+| FPS selector | Sound / signals |
 |---|---|
-| ![FPS selector](screenshots/v2.20_fps.png) | ![Functions and signal selector](screenshots/v2.20_signals.png) |
+| ![FPS selector](screenshots/v2.20_fps.png) | ![Sound and signal selector](screenshots/v2.20_signals.png) |
 
 ## Build and test
 

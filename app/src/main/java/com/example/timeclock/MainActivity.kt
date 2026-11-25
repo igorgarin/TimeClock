@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var zenerContainer: FrameLayout
     private lateinit var imgZener: SvgCanvasView
     private lateinit var imgZenerRing: SvgCanvasView
-    private lateinit var imgFunctions: SvgCanvasView
+    private lateinit var imgSound: SvgCanvasView
     private lateinit var imgThemes: SvgCanvasView
     private lateinit var imgClapper: SvgCanvasView
     private lateinit var imgClack: SvgCanvasView
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var clapperDrawable: android.graphics.drawable.Drawable
     private lateinit var subScreenClapperDrawable: android.graphics.drawable.Drawable
     private lateinit var themesDrawable: android.graphics.drawable.Drawable
-    private lateinit var functionsDrawable: android.graphics.drawable.Drawable
+    private lateinit var soundDrawable: android.graphics.drawable.Drawable
     private lateinit var clackDrawable: android.graphics.drawable.Drawable
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity() {
         clapperDrawable = SvgAssetLoader.load(this, "clapperboard_logo_4.svg")
         subScreenClapperDrawable = SvgAssetLoader.load(this, "clapperboard_logo.svg")
         themesDrawable = SvgAssetLoader.load(this, "icon_themes.svg")
-        functionsDrawable = SvgAssetLoader.load(this, "icon_functions.svg")
+        soundDrawable = SvgAssetLoader.load(this, "icon_sound.svg")
         clackDrawable = SvgAssetLoader.load(this, "Clack_Button_02.svg")
         initializeSoundPool()
 
@@ -169,9 +169,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         startTimeLoop()
+        clapperBreathingAnimator?.takeIf { it.isPaused }?.resume()
     }
 
     override fun onDestroy() {
+        stopClapperBreathing()
         soundPool?.release()
         soundPool = null
         super.onDestroy()
@@ -179,7 +181,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         stopTimeLoop()
-        stopClapperBreathing()
+        clapperBreathingAnimator?.pause()
         super.onPause()
     }
 
@@ -220,7 +222,7 @@ class MainActivity : AppCompatActivity() {
         imgZener = findViewById(R.id.imgZener)
         imgZenerRing = findViewById(R.id.imgZenerRing)
         imgThemes = findViewById(R.id.imgThemes)
-        imgFunctions = findViewById(R.id.imgFunctions)
+        imgSound = findViewById(R.id.imgSound)
         imgClapper = findViewById(R.id.imgClapper)
         imgClack = findViewById(R.id.imgClack)
         lastZenerIndex = Int.MIN_VALUE
@@ -228,7 +230,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnInvert).visibility = View.GONE
         imgThemes.setSvgDrawable(themesDrawable)
-        imgFunctions.setSvgDrawable(functionsDrawable)
+        imgSound.setSvgDrawable(soundDrawable)
         imgClack.setSvgDrawable(clackDrawable)
         imgClapper.setSvgDrawable(clapperDrawable)
         imgClapper.groupAlpha = TimeClockUiConfig.clapperboard.opacity
@@ -236,7 +238,8 @@ class MainActivity : AppCompatActivity() {
         tvFps.text = "${selectedFps}fps"
 
         tvFps.setOnClickListener { showFpsScreen() }
-        imgFunctions.setOnClickListener { showFunctionsScreen() }
+        imgSound.setOnClickListener { showSoundScreen() }
+        imgSound.contentDescription = "Open sound settings"
         imgThemes.setOnClickListener { cycleColorScheme() }
         imgClack.setOnClickListener { triggerClack() }
         imgClack.contentDescription = "Play clack sound"
@@ -289,12 +292,12 @@ class MainActivity : AppCompatActivity() {
                 marginEnd = px(TimeClockUiConfig.TOP_BUTTON_GAP)
             }.also { tvFps.layoutParams = it }
 
-            (imgFunctions.layoutParams as ConstraintLayout.LayoutParams).apply {
-                width = px(TimeClockUiConfig.functionsButton.width)
-                height = px(TimeClockUiConfig.functionsButton.height)
-                topMargin = px(TimeClockUiConfig.functionsButton.top ?: TimeClockUiConfig.FPS_TOP)
+            (imgSound.layoutParams as ConstraintLayout.LayoutParams).apply {
+                width = px(TimeClockUiConfig.soundButton.width)
+                height = px(TimeClockUiConfig.soundButton.height)
+                topMargin = px(TimeClockUiConfig.soundButton.top ?: TimeClockUiConfig.FPS_TOP)
                 marginEnd = px(TimeClockUiConfig.TOP_BUTTON_GAP)
-            }.also { imgFunctions.layoutParams = it }
+            }.also { imgSound.layoutParams = it }
 
             (imgThemes.layoutParams as ConstraintLayout.LayoutParams).apply {
                 width = px(TimeClockUiConfig.colorSchemeButton.width)
@@ -345,7 +348,7 @@ class MainActivity : AppCompatActivity() {
         tvDate.setTextColor(dateColor)
         tvFps.setTextColor(dateColor)
         imgThemes.tintColor = dateColor
-        imgFunctions.tintColor = dateColor
+        imgSound.tintColor = dateColor
         listOf(tvHour, tvMinute, tvSecond, tvColon1, tvColon2).forEach {
             it.setTextColor(timeColor)
         }
@@ -489,7 +492,7 @@ class MainActivity : AppCompatActivity() {
         soundPool?.play(sampleId, volume, volume, 1, 0, 1f)
     }
 
-    private fun saveFunctionSettings() {
+    private fun saveSoundSettings() {
         getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
             .putInt(PREF_SIGNAL_INDEX, selectedSignalIndex)
             .putInt(PREF_VOLUME_LEVEL, selectedVolumeLevel)
@@ -505,7 +508,7 @@ class MainActivity : AppCompatActivity() {
         playSelectedSound()
     }
 
-    private fun showFunctionsScreen() {
+    private fun showSoundScreen() {
         showingSubScreen = true
         stopTimeLoop()
         stopClapperBreathing()
@@ -561,7 +564,7 @@ class MainActivity : AppCompatActivity() {
             val level = ((x / volumeBand.width) * 10f).toInt().coerceIn(0, 9) + 1
             if (level == selectedVolumeLevel) return
             selectedVolumeLevel = level
-            saveFunctionSettings()
+            saveSoundSettings()
             updateVolumeSelection(volumeBars)
             volumePreviewPending = true
             volumeBand.removeCallbacks(volumeIdlePreview)
@@ -621,7 +624,7 @@ class MainActivity : AppCompatActivity() {
                 setOnClickListener {
                     if (selectedSignalIndex != index) {
                         selectedSignalIndex = index
-                        saveFunctionSettings()
+                        saveSoundSettings()
                         updateSignalSelection(signalNumberViews)
                         playSelectedSound()
                     }
@@ -734,7 +737,7 @@ class MainActivity : AppCompatActivity() {
                 val scale = 1.5f + 0.5f * progress
                 view.scaleX = scale
                 view.scaleY = scale
-                view.groupAlpha = 0.10f + 0.10f * progress
+                view.groupAlpha = 0.05f + 0.15f * progress
             }
             start()
         }
